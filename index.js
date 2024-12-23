@@ -16,6 +16,22 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(cookieParser());
+const tokenVerifier = ( req, res, next ) => {
+  const token = req.cookies?.token;
+  if(!token){
+    return res.status(401).send({message: 'Authentication failed'});
+  }
+  jwt.verify(token, process.env.SECRET, (err, decoded) => {
+    if(err){
+      return res.status(401).send({message: 'Authentication failed'});
+    }
+    if(req.query.email !== decoded.email){
+      res.status(403).send({message: 'Access denied'});
+    }
+    next();
+  })
+}
+
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
