@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const multer = require('multer');
 require('dotenv').config();
 const { MongoClient, ServerApiVersion } = require('mongodb');
 
@@ -9,6 +10,9 @@ const port = process.env.PORT || 5000;
 //middlewares
 app.use(cors());
 app.use(express.json());
+
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
 
 const uri = `mongodb+srv://${process.env.USER}:${process.env.PASSWORD}@cluster0.fhbw5.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
@@ -27,6 +31,7 @@ async function run() {
     await client.connect();
 
     const userCollection = client.db("rentzDB").collection("users");
+    const carCollection = client.db("rentzDB").collection("cars");
 
     app.get('/', (req, res) => {
       res.send('server is running')
@@ -40,6 +45,20 @@ async function run() {
       }
       const options = { upsert: true };
       const result = await userCollection.updateOne(filter, updatedDoc, options);
+      res.send(result);
+    })
+
+
+    //car related api
+    app.post('/cars', upload.single('image'), async (req, res) => {
+      const { buffer, originalname, mimetype } = req.file;
+      const doc = {
+        ...req.body,
+        filename: originalname,
+        contentType: mimetype,
+        data: buffer,
+      };
+      const result = await carCollection.insertOne(doc);
       res.send(result);
     })
 
