@@ -1,6 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
+const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
 require('dotenv').config();
 const { MongoClient, ServerApiVersion } = require('mongodb');
 
@@ -8,8 +10,12 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 //middlewares
-app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:5173',
+  credentials: true
+}));
 app.use(express.json());
+app.use(cookieParser());
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
@@ -37,7 +43,26 @@ async function run() {
       res.send('server is running')
     })
 
-    //user realted api
+    //auth related api
+    app.post('/auth', (req, res) => {
+      const data = req.body;
+      const token = jwt.sign(data, process.env.SECRET, { expiresIn: '12h'});
+      res.cookie('token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict'
+      }).send({success: true});
+    })
+
+    app.post('/logOut', (req, res) => {
+      res.clearCookie('token', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict'
+      }).send({success: true});
+    })
+
+    //user related api
     app.put('/users', async (req, res) => {
       const filter = { email: req.body.email };
       const updatedDoc = {
@@ -61,6 +86,7 @@ async function run() {
       const result = await carCollection.insertOne(doc);
       res.send(result);
     })
+
 
     app.listen(port, () => {
       console.log('running on port: ', port);
