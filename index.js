@@ -103,6 +103,17 @@ async function run() {
       res.send(result);
     })
 
+    app.get('/cars', async(req, res) => {
+      const result = await carCollection.find().toArray();
+      const cars = [];
+      result.map(item => {
+        const { data, contentType, ...car } = item;
+        car.carImage = `data:${contentType};base64,${data.buffer.toString("base64")}`;
+        cars.push(car);
+      })
+      res.send(cars);
+    })
+
     app.get('/userCars', tokenVerifier, async (req, res) => {
       const email = req.query.email;
       const query = { email: email };
