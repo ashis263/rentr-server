@@ -4,7 +4,7 @@ const multer = require('multer');
 const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
 require('dotenv').config();
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -114,10 +114,15 @@ async function run() {
       result.map(item => {
         const { data, contentType, ...car } = item;
         car.carImage = `data:${contentType};base64,${data.buffer.toString("base64")}`;
-        console.log(car.carImage);
         cars.push(car);
       })
       res.send(cars);
+    });
+
+    app.delete('/cars', async(req, res) => {
+      const query = { _id: new ObjectId(req.query.id)};
+      const result = await carCollection.deleteOne(query);
+      res.send(result);
     })
 
 
