@@ -94,10 +94,10 @@ async function run() {
     app.post('/cars', upload.single('image'), async (req, res) => {
       const { buffer, originalname, mimetype } = req.file;
       const { features, ...otherData } = req.body;
-      const feturesArr = features.split(',');
+      const featuresArr = features.split(',');
       const doc = {
-        ...req.body,
-        fetures: feturesArr,
+        ...otherData,
+        features: featuresArr,
         filename: originalname,
         contentType: mimetype,
         data: buffer,
