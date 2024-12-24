@@ -114,6 +114,16 @@ async function run() {
       res.send(cars);
     })
 
+    app.get('/car/:id', async(req, res) => {
+      const id = req.params.id;
+      console.log(id);
+      const query = { _id: new ObjectId(id)};
+      const result = await carCollection.findOne(query);
+      const { data, contentType, ...car } = result;
+      car.carImage = `data:${contentType};base64,${data.buffer.toString("base64")}`;
+      res.send(car);
+    })
+
     app.get('/userCars', tokenVerifier, async (req, res) => {
       const email = req.query.email;
       const query = { email: email };
