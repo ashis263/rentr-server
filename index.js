@@ -93,11 +93,8 @@ async function run() {
     //car related api
     app.post('/cars', upload.single('image'), async (req, res) => {
       const { buffer, originalname, mimetype } = req.file;
-      const { features, ...otherData } = req.body;
-      const featuresArr = features.split(',');
       const doc = {
-        ...otherData,
-        features: featuresArr,
+        ...req.body,
         filename: originalname,
         contentType: mimetype,
         data: buffer,
@@ -119,9 +116,32 @@ async function run() {
       res.send(cars);
     });
 
-    app.delete('/cars', async(req, res) => {
-      const query = { _id: new ObjectId(req.query.id)};
+    app.delete('/cars', async (req, res) => {
+      const query = { _id: new ObjectId(req.query.id) };
       const result = await carCollection.deleteOne(query);
+      res.send(result);
+    })
+
+    app.patch('/cars', upload.single('image'), async (req, res) => {
+      let updatedDoc;
+      const { _id, ...data } = req.body;
+      if (req.file) {
+        const { buffer, originalname, mimetype } = req.file;
+        updatedDoc = {
+          $set: {
+            ...data,
+            filename: originalname,
+            contentType: mimetype,
+            data: buffer
+          }
+        }
+      } else {
+        updatedDoc = {
+          $set: data
+        }
+      }
+      const query = { _id: new ObjectId(_id) };
+      const result = await carCollection.updateOne(query, updatedDoc);
       res.send(result);
     })
 
