@@ -16,17 +16,17 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(cookieParser());
-const tokenVerifier = ( req, res, next ) => {
+const tokenVerifier = (req, res, next) => {
   const token = req.cookies?.token;
-  if(!token){
-    return res.status(401).send({message: 'Authentication failed'});
+  if (!token) {
+    return res.status(401).send({ message: 'Authentication failed' });
   }
   jwt.verify(token, process.env.SECRET, (err, decoded) => {
-    if(err){
-      return res.status(401).send({message: 'Authentication failed'});
+    if (err) {
+      return res.status(401).send({ message: 'Authentication failed' });
     }
-    if(req.query.email !== decoded.email){
-      res.status(403).send({message: 'Access denied'});
+    if (req.query.email !== decoded.email) {
+      res.status(403).send({ message: 'Access denied' });
     }
     next();
   })
@@ -52,8 +52,8 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
 
-    const userCollection = client.db("rentzDB").collection("users");
-    const carCollection = client.db("rentzDB").collection("cars");
+    const userCollection = client.db("rentrDB").collection("users");
+    const carCollection = client.db("rentrDB").collection("cars");
 
     app.get('/', (req, res) => {
       res.send('server is running')
@@ -62,12 +62,12 @@ async function run() {
     //auth related api
     app.post('/auth', (req, res) => {
       const data = req.body;
-      const token = jwt.sign(data, process.env.SECRET, { expiresIn: '12h'});
+      const token = jwt.sign(data, process.env.SECRET, { expiresIn: '12h' });
       res.cookie('token', token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict'
-      }).send({success: true});
+      }).send({ success: true });
     })
 
     app.post('/logOut', (req, res) => {
@@ -75,7 +75,7 @@ async function run() {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict'
-      }).send({success: true});
+      }).send({ success: true });
     })
 
     //user related api
@@ -93,14 +93,31 @@ async function run() {
     //car related api
     app.post('/cars', upload.single('image'), async (req, res) => {
       const { buffer, originalname, mimetype } = req.file;
+      const { features, ...otherData } = req.body;
+      const feturesArr = features.split(',');
       const doc = {
         ...req.body,
+        fetures: feturesArr,
         filename: originalname,
         contentType: mimetype,
         data: buffer,
       };
       const result = await carCollection.insertOne(doc);
       res.send(result);
+    })
+
+    app.get('/userCars', tokenVerifier, async (req, res) => {
+      const email = req.query.email;
+      const query = { email: email };
+      const result = await carCollection.find(query).toArray();
+      const cars = [];
+      result.map(item => {
+        const { data, contentType, ...car } = item;
+        car.carImage = `data:${contentType};base64,${data.buffer.toString("base64")}`;
+        console.log(car.carImage);
+        cars.push(car);
+      })
+      res.send(cars);
     })
 
 
