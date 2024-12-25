@@ -194,6 +194,27 @@ async function run() {
       res.send(result);
     })
 
+    app.patch('/bookings/availability', async(req, res) => {
+      const query = { _id: new ObjectId(req.query.id)};
+      const updatedDoc = {
+        $set: {
+          availability: req.body.availability
+        }
+      }
+      const result = await bookingCollection.updateOne(query, updatedDoc);
+      res.send(result);
+    })
+    
+    app.patch('/bookings/date', async(req, res) => {
+      const query = { _id: new ObjectId(req.query.id)};
+      const updatedDoc = {
+        $set: {
+          date: req.body.date
+        }
+      }
+      const result = await bookingCollection.updateOne(query, updatedDoc);
+      res.send(result);
+    })
 
     app.listen(port, () => {
       console.log('running on port: ', port);
