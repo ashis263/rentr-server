@@ -4,7 +4,7 @@ const multer = require('multer');
 const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
 require('dotenv').config();
-const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId, Int32 } = require('mongodb');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -94,8 +94,10 @@ async function run() {
     //car related api
     app.post('/cars', upload.single('image'), async (req, res) => {
       const { buffer, originalname, mimetype } = req.file;
+      const { bookingCount, ...data } = req.body;
       const doc = {
-        ...req.body,
+        bookingCount: new Int32(bookingCount),
+        ...data,
         filename: originalname,
         contentType: mimetype,
         data: buffer,
@@ -145,11 +147,12 @@ async function run() {
 
     app.patch('/cars', upload.single('image'), async (req, res) => {
       let updatedDoc;
-      const { _id, ...data } = req.body;
+      const { _id, bookingCount, ...data } = req.body;
       if (req.file) {
         const { buffer, originalname, mimetype } = req.file;
         updatedDoc = {
           $set: {
+            bookingCount: new Int32(bookingCount),
             ...data,
             filename: originalname,
             contentType: mimetype,
@@ -174,6 +177,13 @@ async function run() {
       }
       const options = { upsert: true };
       const result = await bookingCollection.updateOne(filter, updatedDoc, options);
+      //updating booking count on both cars and bookings collection
+      if(result.upsertedCount){
+        const query = { _id: new ObjectId(req.body.carId)};
+        const queryForBooking = { _id: new ObjectId(result.upsertedId)};
+        const res = await carCollection.updateOne(query, { $inc: { bookingCount: 1} });
+        const resForBooking = await bookingCollection.updateMany(queryForBooking, { $inc: { bookingCount: 1} });
+      }
       res.send(result);
     })
 
