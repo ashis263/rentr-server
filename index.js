@@ -187,6 +187,13 @@ async function run() {
       res.send(result);
     })
 
+    app.get('/userBookings', tokenVerifier, async(req, res) => {
+      const user = req.query.email;
+      const query = { bookedBy: user };
+      const result = await bookingCollection.find(query).toArray();
+      res.send(result);
+    })
+
 
     app.listen(port, () => {
       console.log('running on port: ', port);
