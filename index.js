@@ -54,6 +54,7 @@ async function run() {
 
     const userCollection = client.db("rentrDB").collection("users");
     const carCollection = client.db("rentrDB").collection("cars");
+    const bookingCollection = client.db("rentrDB").collection("bookings");
 
     app.get('/', (req, res) => {
       res.send('server is running')
@@ -116,7 +117,6 @@ async function run() {
 
     app.get('/car/:id', async(req, res) => {
       const id = req.params.id;
-      console.log(id);
       const query = { _id: new ObjectId(id)};
       const result = await carCollection.findOne(query);
       const { data, contentType, ...car } = result;
@@ -163,6 +163,17 @@ async function run() {
       }
       const query = { _id: new ObjectId(_id) };
       const result = await carCollection.updateOne(query, updatedDoc);
+      res.send(result);
+    })
+
+    //booking related api
+    app.put('/bookings', async(req, res) => {
+      const filter = { findingKey: req.body.findingKey };
+      const updatedDoc = {
+        $set: req.body
+      }
+      const options = { upsert: true };
+      const result = await bookingCollection.updateOne(filter, updatedDoc, options);
       res.send(result);
     })
 
