@@ -209,7 +209,8 @@ async function run() {
       const query = { _id: new ObjectId(req.query.id)};
       const updatedDoc = {
         $set: {
-          date: req.body.date
+          date: req.body.date,
+          dailyRentalPrice: req.body.dailyRentalPrice
         }
       }
       const result = await bookingCollection.updateOne(query, updatedDoc);
