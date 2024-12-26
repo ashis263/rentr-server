@@ -106,7 +106,7 @@ async function run() {
       res.send(result);
     })
 
-    app.get('/cars', async(req, res) => {
+    app.get('/cars', async (req, res) => {
       const result = await carCollection.find().toArray();
       const cars = [];
       result.map(item => {
@@ -116,8 +116,8 @@ async function run() {
       })
       res.send(cars);
     })
-    
-    app.get('/cars/recent', async(req, res) => {
+
+    app.get('/cars/recent', async (req, res) => {
       const result = await carCollection.find().sort({ _id: -1 }).limit(6).toArray();
       const cars = [];
       result.map(item => {
@@ -127,9 +127,9 @@ async function run() {
       })
       res.send(cars);
     })
-    app.get('/car/:id', async(req, res) => {
+    app.get('/car/:id', async (req, res) => {
       const id = req.params.id;
-      const query = { _id: new ObjectId(id)};
+      const query = { _id: new ObjectId(id) };
       const result = await carCollection.findOne(query);
       const { data, contentType, ...car } = result;
       car.carImage = `data:${contentType};base64,${data.buffer.toString("base64")}`;
@@ -180,32 +180,43 @@ async function run() {
     })
 
     //booking related api
-    app.put('/bookings', async(req, res) => {
-      const filter = { findingKey: req.body.findingKey };
-      const updatedDoc = {
-        $set: req.body
+    app.post('/bookings', async (req, res) => {
+      const query = { _id: new ObjectId(req.body.carId) };
+      const car = await carCollection.findOne(query);
+      if (car) {
+        const { contentType, data } = car;
+        const doc = {
+          ...req.body,
+            contentType,
+            data
+        }
+        const result = await bookingCollection.insertOne(doc);
+        //updating booking count on both cars and bookings collection
+        if (result.insertedId) {
+          const query = { _id: new ObjectId(req.body.carId) };
+          const queryForBooking = { _id: new ObjectId(result.insertedId) };
+          const res = await carCollection.updateOne(query, { $inc: { bookingCount: 1 } });
+          const resForBooking = await bookingCollection.updateMany(queryForBooking, { $inc: { bookingCount: 1 } });
+        }
+        res.send(result);
       }
-      const options = { upsert: true };
-      const result = await bookingCollection.updateOne(filter, updatedDoc, options);
-      //updating booking count on both cars and bookings collection
-      if(result.upsertedCount){
-        const query = { _id: new ObjectId(req.body.carId)};
-        const queryForBooking = { _id: new ObjectId(result.upsertedId)};
-        const res = await carCollection.updateOne(query, { $inc: { bookingCount: 1} });
-        const resForBooking = await bookingCollection.updateMany(queryForBooking, { $inc: { bookingCount: 1} });
-      }
-      res.send(result);
     })
 
-    app.get('/userBookings', tokenVerifier, async(req, res) => {
+    app.get('/userBookings', tokenVerifier, async (req, res) => {
       const user = req.query.email;
       const query = { bookedBy: user };
       const result = await bookingCollection.find(query).toArray();
-      res.send(result);
+      const bookings = [];
+      result.map(item => {
+        const { data, contentType, ...booking } = item;
+        booking.carImage = `data:${contentType};base64,${data.buffer.toString("base64")}`;
+        bookings.push(booking);
+      })
+      res.send(bookings);
     })
 
-    app.patch('/bookings/availability', async(req, res) => {
-      const query = { _id: new ObjectId(req.query.id)};
+    app.patch('/bookings/availability', async (req, res) => {
+      const query = { _id: new ObjectId(req.query.id) };
       const updatedDoc = {
         $set: {
           availability: req.body.availability
@@ -214,9 +225,9 @@ async function run() {
       const result = await bookingCollection.updateOne(query, updatedDoc);
       res.send(result);
     })
-    
-    app.patch('/bookings/date', async(req, res) => {
-      const query = { _id: new ObjectId(req.query.id)};
+
+    app.patch('/bookings/date', async (req, res) => {
+      const query = { _id: new ObjectId(req.query.id) };
       const updatedDoc = {
         $set: {
           date: req.body.date,
