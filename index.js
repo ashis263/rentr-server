@@ -116,7 +116,17 @@ async function run() {
       })
       res.send(cars);
     })
-
+    
+    app.get('/cars/recent', async(req, res) => {
+      const result = await carCollection.find().sort({ _id: -1 }).limit(6).toArray();
+      const cars = [];
+      result.map(item => {
+        const { data, contentType, ...car } = item;
+        car.carImage = `data:${contentType};base64,${data.buffer.toString("base64")}`;
+        cars.push(car);
+      })
+      res.send(cars);
+    })
     app.get('/car/:id', async(req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id)};
