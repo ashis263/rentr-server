@@ -1,5 +1,5 @@
 # Project: Rentr-server
-Rentr is a car rental website where user can browse, rent, add and manage cars and bookings. It is developed using reactJS, nodeJS, expressJS and mongoDB. Authentication made with firebase. Private API is secured with jsonwebtoken and axios interceptor.
+The Rentr Server is the backend for a car rental platform that enables users to browse, rent, add, and manage cars and bookings. It is built using Node.js, Express.js, MongoDB, and Firebase authentication. The server handles secure API endpoints using JSON Web Token (JWT) and CORS, ensuring smooth communication between the frontend and backend.
 
 ## Purpose
 This website is developed to implement the learnings of developing a full stack website using react, node, express, mongodb, firebase and jsonwebtoken.
