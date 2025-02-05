@@ -59,7 +59,7 @@
 
 <h3>1️⃣ Clone the Repository</h3>
 <pre><code>git clone https://github.com/ashis263/rentr-server.git
-cd rentr</code></pre>
+cd rentr-server</code></pre>
 
 <h3>2️⃣ Install Dependencies</h3>
 <pre><code>npm install</code></pre>
