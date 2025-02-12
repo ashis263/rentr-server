@@ -55,6 +55,7 @@ async function run() {
     const userCollection = client.db("rentrDB").collection("users");
     const carCollection = client.db("rentrDB").collection("cars");
     const bookingCollection = client.db("rentrDB").collection("bookings");
+    const blogCollection = client.db("rentrDB").collection("blogs");
 
     app.get('/', (req, res) => {
       res.send('server is running')
@@ -118,7 +119,7 @@ async function run() {
     })
 
     app.get('/cars/recent', async (req, res) => {
-      const result = await carCollection.find().sort({ _id: -1 }).limit(6).toArray();
+      const result = await carCollection.find().sort({ _id: -1 }).limit(8).toArray();
       const cars = [];
       result.map(item => {
         const { data, contentType, ...car } = item;
@@ -235,6 +236,19 @@ async function run() {
         }
       }
       const result = await bookingCollection.updateOne(query, updatedDoc);
+      res.send(result);
+    })
+
+    //blog related api
+    app.get('/blogs', async (req, res) => {
+      const result = await blogCollection.find().toArray();
+      res.send(result);
+    })
+
+    app.get('/blog/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await blogCollection.findOne(query);
       res.send(result);
     })
 
