@@ -128,6 +128,18 @@ async function run() {
       })
       res.send(cars);
     })
+
+    app.get('/cars/popular', async (req, res) => {
+      const result = await carCollection.find().sort({ bookingCount: -1 }).limit(5).toArray();
+      const cars = [];
+      result.map(item => {
+        const { data, contentType, ...car } = item;
+        car.carImage = `data:${contentType};base64,${data.buffer.toString("base64")}`;
+        cars.push(car);
+      })
+      res.send(cars);
+    })
+
     app.get('/car/:id', async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
@@ -188,8 +200,8 @@ async function run() {
         const { contentType, data } = car;
         const doc = {
           ...req.body,
-            contentType,
-            data
+          contentType,
+          data
         }
         const result = await bookingCollection.insertOne(doc);
         //updating booking count on both cars and bookings collection
